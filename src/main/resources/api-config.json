@@ -1,0 +1,5 @@
+{
+  "modelPackage": "thale.info.api.model",
+  "java8": true,
+  "dateLibrary": "java8"
+}

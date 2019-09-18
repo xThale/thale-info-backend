@@ -1,0 +1,142 @@
+openapi: 3.0.0
+info:
+  title: "Todo api definition"
+  version: 1.0.0
+
+schemes:
+  - "https"
+
+paths:
+  /todo:
+    get:
+      responses:
+        200:
+          description: Todo[s] found
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/todo_find_response'
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/todo_request'
+      responses:
+        201:
+          description: Todo created
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/todo_create_response'
+  /auth/user:
+    get:
+      responses:
+        200:
+          description: Returns the user object for a bearer token
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/user_response'
+  /auth/users/{uuid}/roles:
+    get:
+      parameters:
+        - name: uuid
+          in: path
+          description: uuid of the user
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Returns the roles of an user
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/roles_response'
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/add_roles_request'
+      responses:
+        200:
+          description: Returns the roles of an user
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/roles_response'
+
+
+
+components:
+  schemas:
+
+    #TODO_SCHEMAS:
+    todo_find_response:
+      properties:
+        todos:
+          type: array
+          items:
+            $ref: '#/components/schemas/todo_response'
+    todo_response:
+      properties:
+        uuid:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        done:
+          type: boolean
+    todo_create_response:
+      type: object
+      properties:
+        uuid:
+          type: string
+          format: uuid
+    todo_request:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        done:
+          type: boolean
+
+    #USER_SCHEMAS:
+    user_response:
+      properties:
+        uuid:
+          type: string
+          format: uuid
+        email:
+          type: string
+        avatar:
+          type: string
+        name:
+          type: string
+        roles:
+          type: array
+          items:
+            type: string
+    roles_response:
+      properties:
+        roles:
+          type: array
+          items:
+            type: string
+    add_roles_request:
+      properties:
+        roles:
+          type: array
+          items:
+            type: string
