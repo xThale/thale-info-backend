@@ -140,3 +140,16 @@ components:
           type: array
           items:
             type: string
+
+    #AUTH_SCHEMAS:
+    login_request:
+      properties:
+        loginMethod:
+          $ref: '#/components/schemas/login_method_type'
+        token:
+          type: string
+    login_method_type:
+      type: string
+      enum:
+        - GOOGLE
+

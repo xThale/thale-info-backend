@@ -10,5 +10,5 @@ fun extractUUID(request: Request) : UUID {
 }
 
 fun extractFromPath(request: Request, name: String): String {
-    return request.path(name) ?: throw BaseProblem(message = "uuid parameter is missing")
+    return request.path(name) ?: throw BaseProblem(title = "uuid parameter is missing")
 }

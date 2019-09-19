@@ -11,37 +11,27 @@ import org.http4k.routing.routes
 import thale.info.api.lens.Lenses
 import thale.info.api.model.RolesResponse
 import thale.info.dataaccess.User
-import thale.info.mapper.toResponse
+import thale.info.exception.validation.UserNotFoundProblem
 import thale.info.service.UserService
 import thale.info.util.extractUUID
-import thale.info.validation.UserPermissionValidator
+import thale.info.validation.UserEndpointValidator
 
-private val businessValidator = UserPermissionValidator()
+private val businessValidator = UserEndpointValidator()
 
-fun securityRoute(userContext :  RequestContextLens<User>,
-                  service: UserService): RoutingHttpHandler = "/auth" bind routes(
+fun userRoute(userContext :  RequestContextLens<User>,
+              service: UserService): RoutingHttpHandler = "/users" bind routes(
 
-
-
-    "/user" bind Method.GET to { request ->
-        val user = userContext(request)
-        Response(Status.OK).with(Lenses.userResponse of user.toResponse())
-    },
-    "/users/{uuid}/roles" bind Method.POST to { request ->
+    "/{uuid}/roles" bind Method.POST to { request ->
         val rolesRequest = Lenses.addRolesRequest(request).roles
-        val user = userContext(request)
         val uuid = extractUUID(request)
-
-        businessValidator.validatePostRoles(user)
         val updatedRoles = service.addRolesToUser(uuid, rolesRequest)
-
         Response(Status.OK).with(Lenses.rolesResponse of RolesResponse().roles(updatedRoles))
     },
-    "/users/{uuid}/roles" bind Method.GET to { request ->
+    "/{uuid}/roles" bind Method.GET to { request ->
         val user = userContext(request)
-        val pathUUID = extractUUID(request)
-        businessValidator.validateGetRoles(pathUUID, user)
-        val requestedUser = service.getUserForUUID(pathUUID)
+        val uuid = extractUUID(request)
+        businessValidator.validateGetRoles(uuid, user)
+        val requestedUser = service.getUserForUUID(uuid) ?: throw UserNotFoundProblem(uuid)
         Response(Status.OK).with(Lenses.rolesResponse of RolesResponse().roles(requestedUser.roles))
     }
 

@@ -5,7 +5,7 @@ import thale.info.api.model.TodoRequest
 import thale.info.api.model.TodoResponse
 import thale.info.dataaccess.Todo
 
-fun TodoRequest.toDto() : Todo {
+fun TodoRequest.toTodo() : Todo {
     return Todo(title = this.title, description = this.description, done = this.isDone)
 }
 

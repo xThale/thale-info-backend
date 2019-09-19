@@ -1,4 +1,4 @@
-package thale.info.security.model
+package thale.info.api.security.authentication.model
 
 /**
  * User who's token was successfully authenticated

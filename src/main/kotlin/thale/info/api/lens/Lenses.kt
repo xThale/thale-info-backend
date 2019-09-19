@@ -5,7 +5,7 @@ import org.http4k.format.Gson.auto
 import org.http4k.lens.BiDiBodyLens
 import thale.info.api.model.*
 import thale.info.exception.Problem
-import thale.info.security.model.GoogleAuthenticationResponse
+import thale.info.api.security.authentication.model.TokenExchangeResponse
 
 /**
  * Holds all [BiDiBodyLens] for the apis
@@ -22,5 +22,6 @@ object Lenses {
 
     val problem: BiDiBodyLens<Problem> = Body.auto<Problem>().toLens()
 
-    val googleAuthenticationResponse: BiDiBodyLens<GoogleAuthenticationResponse> = Body.auto<GoogleAuthenticationResponse>().toLens()
+    val loginRequest: BiDiBodyLens<LoginRequest> = Body.auto<LoginRequest>().toLens()
+    val tokenExchangeResponse: BiDiBodyLens<TokenExchangeResponse> = Body.auto<TokenExchangeResponse>().toLens()
 }

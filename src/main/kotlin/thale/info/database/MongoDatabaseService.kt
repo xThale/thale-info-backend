@@ -2,7 +2,10 @@ package thale.info.database
 
 import org.litote.kmongo.KMongo
 
-
+/**
+ * Service for accessing the mongo database.
+ * Contains all sub-services for data access
+ */
 class MongoDatabaseService : DatabaseService {
 
     companion object {

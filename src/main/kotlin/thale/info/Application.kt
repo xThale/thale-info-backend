@@ -18,16 +18,19 @@ import org.koin.dsl.module
 import thale.info.api.filter.AuthenticationFilter
 import thale.info.api.filter.AuthorizationFilter
 import thale.info.api.filter.ProblemFilter
-import thale.info.api.route.securityRoute
+import thale.info.api.route.authRoute
 import thale.info.api.route.todoRoute
+import thale.info.api.route.userRoute
 import thale.info.config.ConfigProvider
 import thale.info.config.DefaultConfigProvider
 import thale.info.config.HttpConfigProvider
 import thale.info.dataaccess.User
 import thale.info.database.DatabaseService
 import thale.info.database.MongoDatabaseService
-import thale.info.security.GoogleTokenAuthenticator
-import thale.info.security.TokenAuthenticator
+import thale.info.api.security.authentication.GoogleTokenAuthenticator
+import thale.info.api.security.authentication.TokenAuthenticator
+import thale.info.api.security.authorization.AuthorizationService
+import thale.info.api.security.authorization.DefaultAuthorizationService
 import thale.info.service.UserService
 import thale.info.service.TodoService
 
@@ -35,16 +38,14 @@ class Main : KoinComponent {
 
     private val config by inject<ConfigProvider>()
 
-    private val tokenAuthenticator by inject<TokenAuthenticator>()
-    private val databaseService by inject<DatabaseService>()
-
+    private val userService by inject<UserService>()
     private val todoService by inject<TodoService>()
     private val securityService by inject<UserService>()
+    private val authorizationService by inject<AuthorizationService>()
 
     private fun run() {
 
         val port = config.http.port
-
         log.info("Starting application on port $port")
 
         val contexts = RequestContexts()
@@ -52,14 +53,15 @@ class Main : KoinComponent {
 
         val api = routes( // define routes for http4k
             todoRoute(todoService),
-            securityRoute(userContext, securityService)
+            userRoute(userContext, securityService),
+            authRoute(userContext, userService, config)
         )
 
         ServerFilters.InitialiseRequestContext(contexts)
             .then(ServerFilters.CatchAll())
-            .then(ProblemFilter()) // register filter for exception handling
-            .then(AuthenticationFilter(userContext, tokenAuthenticator, databaseService))
-            .then(AuthorizationFilter(userContext))
+            .then(ProblemFilter()) // catch exceptions and transform then into a universal response
+            .then(AuthenticationFilter(userContext, userService, config)) // handling authentication of the request
+            .then(AuthorizationFilter(userContext, authorizationService)) // handling authorization of the request per endpoint
             .then(api).asServer(Netty(port)).start() // start server on port
 
 
@@ -79,10 +81,13 @@ class Main : KoinComponent {
             single<ConfigProvider> { DefaultConfigProvider() } binds (arrayOf(
                 HttpConfigProvider::class
             ))
+
+            single<AuthorizationService> { DefaultAuthorizationService() }
+            single<TokenAuthenticator> { GoogleTokenAuthenticator() }
+
             single<DatabaseService> { MongoDatabaseService() }
             single { TodoService(get())}
             single { UserService(get()) }
-            single<TokenAuthenticator> {GoogleTokenAuthenticator()}
         }
 
         @JvmStatic

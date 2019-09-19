@@ -60,6 +60,11 @@ dependencies {
     // config
     implementation("com.typesafe:config:${versions["typesafeConfig"]}")
 
+    // auth
+    implementation("com.google.api-client:google-api-client:1.30.2")
+    implementation("com.google.auth:google-auth-library-oauth2-http:0.17.1")
+    implementation("com.auth0:java-jwt:3.8.2")
+
     // test
     testImplementation("io.kotlintest:kotlintest-runner-junit5:3.3.2")
     testImplementation("io.mockk:mockk:1.9.3")
@@ -80,7 +85,12 @@ configurations.all {
         force("org.jetbrains.kotlin:kotlin-stdlib-jdk7:${versions["kotlin"]}")
         force("com.typesafe:config:${versions["typesafeConfig"]}")
         force("com.fasterxml.jackson.core:jackson-databind:2.9.9")
+        force("com.google.j2objc:j2objc-annotations:1.3")
+        force("com.google.http-client:google-http-client-jackson2:1.31.0")
+        force("com.google.guava:guava:28.0-android")
+        force("com.google.http-client:google-http-client:1.31.0")
         force("org.slf4j:slf4j-api:1.7.26")
+        force("commons-codec:commons-codec:1.12")
         force("io.mockk:mockk:1.9.3")
     }
 }
