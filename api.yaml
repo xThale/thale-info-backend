@@ -7,22 +7,22 @@ schemes:
   - "https"
 
 paths:
-  /todo:
+  /card:
     get:
       responses:
         200:
-          description: Todo[s] found
+          description: Card found
           headers: {}
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/todo_find_response'
+                $ref: '#/components/schemas/card_find_response'
     post:
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/todo_request'
+              $ref: '#/components/schemas/card_request'
       responses:
         201:
           description: Todo created
@@ -30,7 +30,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/todo_create_response'
+                $ref: '#/components/schemas/card_create_response'
   /auth/user:
     get:
       responses:
@@ -79,41 +79,42 @@ components:
   schemas:
 
     #TODO_SCHEMAS:
-    todo_find_response:
+    card_find_response:
       properties:
-        todos:
+        cards:
           type: array
           items:
-            $ref: '#/components/schemas/todo_response'
-    todo_response:
+            $ref: '#/components/schemas/card_response'
+    card_response:
       properties:
         uuid:
           type: string
           format: uuid
-        title:
+        front:
           type: string
-        description:
+        back:
           type: string
-        done:
+        leech:
           type: boolean
-    todo_create_response:
+    card_create_response:
       type: object
       properties:
         uuid:
           type: string
           format: uuid
-    todo_request:
+    card_request:
       type: object
       properties:
-        title:
+        front:
           type: string
-        description:
+        back:
           type: string
-        done:
+        leech:
           type: boolean
 
     #USER_SCHEMAS:
-    user_response:
+
+    user_model:
       properties:
         uuid:
           type: string
@@ -128,6 +129,12 @@ components:
           type: array
           items:
             type: string
+
+    user_response:
+      properties:
+        user:
+          $ref: '#/components/schemas/user_model'
+
     roles_response:
       properties:
         roles:
@@ -152,4 +159,20 @@ components:
       type: string
       enum:
         - GOOGLE
+
+    login_response:
+      properties:
+        token:
+          $ref: '#/components/schemas/token_info_model'
+        user:
+          $ref: '#/components/schemas/user_model'
+
+    token_info_model:
+      properties:
+        idToken:
+          type: string
+        refreshToken:
+          type: string
+        expiresAt:
+          type: string
 

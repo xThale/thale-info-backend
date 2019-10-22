@@ -7,7 +7,7 @@ import java.time.format.DateTimeFormatter
 /**
  * The universal problem, which is returned to api calls as response to exceptions
  */
-class Problem(val status: String,
+class Problem(val status: Int,
               val message: String,
               val details: String,
               val timestamp: String)
@@ -22,5 +22,5 @@ open class BaseProblem(val status: Status = Status.INTERNAL_SERVER_ERROR,
                        private val timestamp: OffsetDateTime = OffsetDateTime.now(),
                        override val message: String = "$title: $details") : Exception(message) {
 
-    fun toProblem() = Problem(status.toString(), title, details, timestamp.format(DateTimeFormatter.ISO_DATE_TIME))
+    fun toProblem() = Problem(status.code, title, details, timestamp.format(DateTimeFormatter.ISO_DATE_TIME))
 }

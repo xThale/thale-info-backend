@@ -19,6 +19,7 @@ group = "thale.info"
 version = "1.0.0-SNAPSHOT"
 
 repositories {
+    mavenLocal()
     mavenCentral()
     jcenter()
 }
@@ -28,6 +29,9 @@ application {
 }
 
 dependencies {
+
+    // internal dependencies
+    implementation("info.thale:http4k-auth-filter:1.0.0-SNAPSHOT")
 
     // used in the generation of the api model
     implementation("com.sun.xml.ws:rt:2.3.2")

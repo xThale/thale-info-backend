@@ -1,4 +1,4 @@
-package thale.info.api.route
+package thale.info.route
 
 import org.http4k.core.Method
 import org.http4k.core.Response
@@ -8,15 +8,15 @@ import org.http4k.lens.RequestContextLens
 import org.http4k.routing.RoutingHttpHandler
 import org.http4k.routing.bind
 import org.http4k.routing.routes
-import thale.info.api.lens.Lenses
 import thale.info.api.model.RolesResponse
 import thale.info.dataaccess.User
-import thale.info.exception.validation.UserNotFoundProblem
+import thale.info.exception.UserNotFoundProblem
+import thale.info.lens.Lenses
 import thale.info.service.UserService
 import thale.info.util.extractUUID
-import thale.info.validation.UserEndpointValidator
+import thale.info.validation.UserEndpointRoleValidator
 
-private val businessValidator = UserEndpointValidator()
+private val businessValidator = UserEndpointRoleValidator()
 
 fun userRoute(userContext :  RequestContextLens<User>,
               service: UserService): RoutingHttpHandler = "/users" bind routes(
@@ -30,7 +30,7 @@ fun userRoute(userContext :  RequestContextLens<User>,
     "/{uuid}/roles" bind Method.GET to { request ->
         val user = userContext(request)
         val uuid = extractUUID(request)
-        businessValidator.validateGetRoles(uuid, user)
+        businessValidator.validateRolesForEndpointGetRoles(uuid, user)
         val requestedUser = service.getUserForUUID(uuid) ?: throw UserNotFoundProblem(uuid)
         Response(Status.OK).with(Lenses.rolesResponse of RolesResponse().roles(requestedUser.roles))
     }

@@ -1,4 +1,4 @@
-package thale.info.api.route
+package thale.info.route
 
 import org.http4k.core.Method
 import org.http4k.core.Response
@@ -8,22 +8,26 @@ import org.http4k.lens.RequestContextLens
 import org.http4k.routing.RoutingHttpHandler
 import org.http4k.routing.bind
 import org.http4k.routing.routes
-import thale.info.api.lens.Lenses
 import thale.info.api.model.LoginMethodType
+import thale.info.api.model.LoginResponse
+import thale.info.api.model.UserResponse
+import thale.info.auth.AuthTokenService
 import thale.info.config.ConfigProvider
 import thale.info.dataaccess.User
-import thale.info.mapper.toResponse
-import thale.info.api.security.authentication.TokenAuthenticator
-import thale.info.api.security.authentication.model.TokenExchangeResponse
-import thale.info.service.UserService
+import thale.info.lens.Lenses
+import thale.info.mapper.toTokenInfoModel
+import thale.info.mapper.toUserModel
 
-fun authRoute(userContext :  RequestContextLens<User>, userService: UserService, config: ConfigProvider): RoutingHttpHandler = "/auth" bind routes(
+fun authRoute(userContext :  RequestContextLens<User>, config: ConfigProvider): RoutingHttpHandler = "/auth" bind routes(
 
 
     "/user" bind Method.GET to { request ->
         val user = userContext(request)
-        Response(Status.OK).with(Lenses.userResponse of user.toResponse())
+        val response = UserResponse().user(user.toUserModel())
+        Response(Status.OK).with(Lenses.userResponse of response)
     },
+
+
 
     /**
      * Called if a user wants to login and exchange an authorization token for an id token and refresh token
@@ -35,8 +39,14 @@ fun authRoute(userContext :  RequestContextLens<User>, userService: UserService,
      */
     "/login" bind Method.POST to { request ->
         val loginRequest = Lenses.loginRequest(request) // Get request body object
-        val authenticator = TokenAuthenticator.getTokenAuthenticator(loginRequest.loginMethod) // Get corresponding authenticator
-        val tokenExchangeResponse = authenticator.exchangeAuthorizationCode(loginRequest.token, userService, config) // Exchange code for tokens
-        Response(Status.OK).with(Lenses.tokenExchangeResponse of tokenExchangeResponse) // Send tokens as response
+
+        val userTokenPair = AuthTokenService.getAuthTokenService(loginRequest.loginMethod, config) // Get corresponding authenticator
+            .exchangeAuthorizationCode(loginRequest.token) // Exchange code for tokens
+
+        val response = LoginResponse()
+            .token(userTokenPair.second.toTokenInfoModel())
+            .user(userTokenPair.first.toUserModel())
+
+        Response(Status.OK).with(Lenses.loginResponse of response) // Send tokens as response
     }
 )

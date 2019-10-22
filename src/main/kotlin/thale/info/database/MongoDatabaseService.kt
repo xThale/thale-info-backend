@@ -13,7 +13,7 @@ class MongoDatabaseService : DatabaseService {
         private val database = client.getDatabase("thale") // connect to the database
     }
 
-    override val todo = TodoDatabaseService(database)
+    override val card = CardDatabaseService(database)
     override val user = UserDatabaseService(database)
 
 }

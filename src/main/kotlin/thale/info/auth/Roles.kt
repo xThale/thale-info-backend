@@ -1,4 +1,4 @@
-package thale.info.api.security
+package thale.info.auth
 
 /**
  * Map of all roles existing.

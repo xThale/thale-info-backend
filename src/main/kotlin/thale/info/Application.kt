@@ -1,7 +1,12 @@
 package thale.info
+import info.thale.http4k.auth.filter.authentication.AuthenticationFilter
+import info.thale.http4k.auth.filter.authorization.AuthorizationFilter
+import info.thale.http4k.auth.filter.config.AuthFilterConfiguration
+import info.thale.http4k.auth.filter.model.EndpointSignature
 import mu.KotlinLogging
 import org.http4k.core.RequestContexts
 import org.http4k.core.then
+import org.http4k.filter.CorsPolicy
 import org.http4k.filter.ServerFilters
 import org.http4k.lens.RequestContextKey
 import org.http4k.routing.routes
@@ -15,33 +20,30 @@ import org.koin.core.logger.Logger
 import org.koin.core.logger.MESSAGE
 import org.koin.dsl.binds
 import org.koin.dsl.module
-import thale.info.api.filter.AuthenticationFilter
-import thale.info.api.filter.AuthorizationFilter
-import thale.info.api.filter.ProblemFilter
-import thale.info.api.route.authRoute
-import thale.info.api.route.todoRoute
-import thale.info.api.route.userRoute
+import thale.info.api.model.LoginMethodType
+import thale.info.auth.AuthTokenService
+import thale.info.auth.GoogleAuthTokenService
 import thale.info.config.ConfigProvider
 import thale.info.config.DefaultConfigProvider
 import thale.info.config.HttpConfigProvider
 import thale.info.dataaccess.User
 import thale.info.database.DatabaseService
 import thale.info.database.MongoDatabaseService
-import thale.info.api.security.authentication.GoogleTokenAuthenticator
-import thale.info.api.security.authentication.TokenAuthenticator
-import thale.info.api.security.authorization.AuthorizationService
-import thale.info.api.security.authorization.DefaultAuthorizationService
+import thale.info.exception.UserNotFoundProblem
+import thale.info.exception.authentication.UserNotRegisteredProblem
+import thale.info.filter.ProblemFilter
+import thale.info.route.authRoute
+import thale.info.route.todoRoute
+import thale.info.route.userRoute
+import thale.info.service.CardService
 import thale.info.service.UserService
-import thale.info.service.TodoService
 
 class Main : KoinComponent {
 
     private val config by inject<ConfigProvider>()
 
-    private val userService by inject<UserService>()
-    private val todoService by inject<TodoService>()
+    private val todoService by inject<CardService>()
     private val securityService by inject<UserService>()
-    private val authorizationService by inject<AuthorizationService>()
 
     private fun run() {
 
@@ -54,14 +56,24 @@ class Main : KoinComponent {
         val api = routes( // define routes for http4k
             todoRoute(todoService),
             userRoute(userContext, securityService),
-            authRoute(userContext, userService, config)
+            authRoute(userContext, config)
         )
 
+        val authFilterConfiguration = AuthFilterConfiguration<User>()
+            .registerGoogleTokenAuthenticator(config.auth.google.clientId) { token ->
+                val mail = AuthTokenService.getAuthTokenService(LoginMethodType.GOOGLE, config)
+                    .getMailFromToken(token)
+                securityService.getUserByEmail(mail) ?: throw UserNotRegisteredProblem("User for mail $mail was not found.")
+            }
+            .registerUnsecuredEndpoint(EndpointSignature(path = "/auth/login"))
+
+
         ServerFilters.InitialiseRequestContext(contexts)
+            .then(ServerFilters.Cors(CorsPolicy.UnsafeGlobalPermissive))
             .then(ServerFilters.CatchAll())
             .then(ProblemFilter()) // catch exceptions and transform then into a universal response
-            .then(AuthenticationFilter(userContext, userService, config)) // handling authentication of the request
-            .then(AuthorizationFilter(userContext, authorizationService)) // handling authorization of the request per endpoint
+            .then(AuthenticationFilter(userContext, authFilterConfiguration)) // handling authentication of the request
+            .then(AuthorizationFilter(userContext, authFilterConfiguration)) // handling authorization of the request per endpoint
             .then(api).asServer(Netty(port)).start() // start server on port
 
 
@@ -82,11 +94,10 @@ class Main : KoinComponent {
                 HttpConfigProvider::class
             ))
 
-            single<AuthorizationService> { DefaultAuthorizationService() }
-            single<TokenAuthenticator> { GoogleTokenAuthenticator() }
+            single<AuthTokenService> { GoogleAuthTokenService(get()) }
 
             single<DatabaseService> { MongoDatabaseService() }
-            single { TodoService(get())}
+            single { CardService(get())}
             single { UserService(get()) }
         }
 

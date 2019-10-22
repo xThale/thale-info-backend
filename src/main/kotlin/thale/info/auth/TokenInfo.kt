@@ -1,8 +1,8 @@
-package thale.info.api.security.authentication.model
+package thale.info.auth
 
 import java.time.OffsetDateTime
 
-data class TokenExchangeResponse(
+data class TokenInfo(
     val idToken: String,
     val refreshToken: String,
     val expiresAt: OffsetDateTime

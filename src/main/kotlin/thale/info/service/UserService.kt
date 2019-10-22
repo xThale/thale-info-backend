@@ -1,7 +1,7 @@
 package thale.info.service
 
 import thale.info.database.DatabaseService
-import thale.info.exception.validation.UserNotFoundProblem
+import thale.info.exception.UserNotFoundProblem
 import java.util.*
 
 class UserService(private val databaseService: DatabaseService) {
