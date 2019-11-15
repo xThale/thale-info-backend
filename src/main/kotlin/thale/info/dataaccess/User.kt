@@ -1,7 +1,6 @@
 package thale.info.dataaccess
 
-import info.thale.http4k.auth.filter.authorization.RoleBased
-import thale.info.api.model.UserModel
+import info.thale.http4k.auth.filter.authorization.role.RoleBased
 import thale.info.util.createUUID
 import java.util.*
 
@@ -15,6 +14,6 @@ data class User(
     val avatar: String,
     val name: String,
     val roles: List<String> = emptyList()
-) : RoleBased {
+) : RoleBased<String> {
     override fun getRoleList() = roles
 }

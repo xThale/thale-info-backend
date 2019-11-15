@@ -1,8 +1,9 @@
 package thale.info
+
 import info.thale.http4k.auth.filter.authentication.AuthenticationFilter
 import info.thale.http4k.auth.filter.authorization.AuthorizationFilter
 import info.thale.http4k.auth.filter.config.AuthFilterConfiguration
-import info.thale.http4k.auth.filter.model.EndpointSignature
+import info.thale.http4k.auth.filter.endpoint.EndpointSignature
 import mu.KotlinLogging
 import org.http4k.core.RequestContexts
 import org.http4k.core.then
@@ -29,7 +30,6 @@ import thale.info.config.HttpConfigProvider
 import thale.info.dataaccess.User
 import thale.info.database.DatabaseService
 import thale.info.database.MongoDatabaseService
-import thale.info.exception.UserNotFoundProblem
 import thale.info.exception.authentication.UserNotRegisteredProblem
 import thale.info.filter.ProblemFilter
 import thale.info.route.authRoute
@@ -59,21 +59,23 @@ class Main : KoinComponent {
             authRoute(userContext, config)
         )
 
-        val authFilterConfiguration = AuthFilterConfiguration<User>()
-            .registerGoogleTokenAuthenticator(config.auth.google.clientId) { token ->
+        val authFilterConfiguration = AuthFilterConfiguration<User, String>()
+
+        authFilterConfiguration.issuerTokenAuthenticators.registerGoogleTokenAuthenticator(config.auth.google.clientId) { token ->
                 val mail = AuthTokenService.getAuthTokenService(LoginMethodType.GOOGLE, config)
                     .getMailFromToken(token)
                 securityService.getUserByEmail(mail) ?: throw UserNotRegisteredProblem("User for mail $mail was not found.")
             }
-            .registerUnsecuredEndpoint(EndpointSignature(path = "/auth/login"))
+
+        authFilterConfiguration.endpointSecurityConfig.registerUnsecuredEndpoint("/auth/login")
 
 
         ServerFilters.InitialiseRequestContext(contexts)
             .then(ServerFilters.Cors(CorsPolicy.UnsafeGlobalPermissive))
             .then(ServerFilters.CatchAll())
             .then(ProblemFilter()) // catch exceptions and transform then into a universal response
-            .then(AuthenticationFilter(userContext, authFilterConfiguration)) // handling authentication of the request
-            .then(AuthorizationFilter(userContext, authFilterConfiguration)) // handling authorization of the request per endpoint
+            .then(AuthenticationFilter(authFilterConfiguration).authenticate(userContext)) // handling authentication of the request
+            .then(AuthorizationFilter(authFilterConfiguration).authorize(userContext)) // handling authorization of the request per endpoint
             .then(api).asServer(Netty(port)).start() // start server on port
 
 
