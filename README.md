@@ -1,0 +1,3 @@
+# Thale.Info Backend
+
+This project acts as the backend of [my website](http://thale.info/). It uses Kotlin as the programming language. This project was a way to improve my backend and deploying skills.The website has an authentication function which uses the OAuth service of google. It was deployed in the google cloud but after stopping to use it for educational purposes I stopped serving it to minimize costs.
